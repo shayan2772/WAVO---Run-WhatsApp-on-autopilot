@@ -1,0 +1,560 @@
+/* Shared styles for the Audiences + Campaigns pages. */
+.mkt-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #9aa7b4);
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.mkt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+.mkt-toolbar input,
+.mkt-form input,
+.mkt-form textarea,
+.mkt-form select {
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-color, #2a3746);
+  background: var(--bg-secondary, #111a27);
+  color: var(--text-primary, #e6edf3);
+  font-size: 14px;
+  font-family: inherit;
+}
+.mkt-toolbar input {
+  flex: 1;
+  min-width: 160px;
+}
+.mkt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--border-color, #2a3746);
+  background: var(--bg-secondary, #111a27);
+  color: var(--text-primary, #e6edf3);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.mkt-btn--primary {
+  background: #1fae5b;
+  border-color: #1fae5b;
+  color: #fff;
+}
+.mkt-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.mkt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+.mkt-card {
+  position: relative;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #2a3746);
+  background: var(--bg-secondary, #111a27);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.mkt-card:hover {
+  border-color: #1fae5b;
+}
+.mkt-card__title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.mkt-card__meta {
+  color: var(--text-secondary, #9aa7b4);
+  font-size: 13px;
+}
+.mkt-card__del {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #9aa7b4);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.mkt-card__del:hover {
+  color: #e5484d;
+  opacity: 1;
+}
+.mkt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--border-color, #2a3746);
+  border-radius: 12px;
+  background: var(--bg-secondary, #111a27);
+  margin: 16px 0;
+}
+.mkt-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mkt-form__row select {
+  flex: 1;
+  min-width: 180px;
+}
+.mkt-hint,
+.mkt-progress__label {
+  font-size: 12.5px;
+  color: var(--text-secondary, #9aa7b4);
+}
+.mkt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+.mkt-table th,
+.mkt-table td {
+  text-align: left;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border-color, #2a3746);
+  font-size: 14px;
+}
+.mkt-table th {
+  color: var(--text-secondary, #9aa7b4);
+  font-weight: 600;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.mkt-empty {
+  color: var(--text-secondary, #9aa7b4);
+  text-align: center;
+  padding: 28px !important;
+}
+.mkt-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary, #9aa7b4);
+}
+.mkt-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(31, 174, 91, 0.14);
+  color: #1fae5b;
+}
+.mkt-tag--red {
+  background: rgba(229, 72, 77, 0.14);
+  color: #e5484d;
+}
+.mkt-tag--amber {
+  background: rgba(217, 138, 0, 0.16);
+  color: #d98a00;
+}
+.mkt-tag--blue {
+  background: rgba(56, 132, 255, 0.16);
+  color: #4a90ff;
+}
+.mkt-tag--gray {
+  background: rgba(148, 163, 184, 0.16);
+  color: #94a3b8;
+}
+.mkt-tag--green {
+  background: rgba(31, 174, 91, 0.14);
+  color: #1fae5b;
+}
+.mkt-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border-color, #2a3746);
+  overflow: hidden;
+  margin-bottom: 4px;
+  max-width: 220px;
+}
+.mkt-progress__bar {
+  height: 100%;
+  background: #1fae5b;
+  transition: width 0.4s;
+}
+.mkt-actions {
+  display: flex;
+  gap: 6px;
+}
+.mkt-icon-btn {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 7px;
+  border: 1px solid var(--border-color, #2a3746);
+  background: var(--bg-secondary, #111a27);
+  color: var(--text-primary, #e6edf3);
+  cursor: pointer;
+}
+.mkt-icon-btn--red:hover {
+  color: #e5484d;
+  border-color: #e5484d;
+}
+.mkt-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Inline text link used inside hints (e.g. "create an audience"). */
+.mkt-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mkt-inline-link:hover {
+  text-decoration: underline;
+}
+
+/* Friendly empty states for the marketing pages. */
+.mkt-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--text-secondary, #9aa7b4);
+}
+.mkt-empty-state svg {
+  color: var(--primary);
+  opacity: 0.7;
+}
+.mkt-empty-state p {
+  margin: 0;
+  max-width: 380px;
+  font-size: 0.9rem;
+}
+
+/* Formatted phone numbers stay LTR with tabular figures for clean alignment. */
+.mono-num {
+  direction: ltr;
+  unicode-bidi: plaintext;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================================================
+   Campaigns redesign — KPI strip + campaign cards with progress rings.
+   =========================================================================== */
+.camp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0 1.5rem;
+}
+.camp-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--glass-border, var(--border));
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  box-shadow: var(--elev-1);
+}
+.camp-stat__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 12px);
+  background: color-mix(in srgb, var(--kpi-accent, var(--primary)) 15%, transparent);
+  color: var(--kpi-accent, var(--primary));
+}
+.camp-stat__value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); line-height: 1.1; letter-spacing: -0.02em; }
+.camp-stat__label { font-size: 0.8rem; color: var(--text-secondary); }
+
+.camp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+.camp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.3rem;
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--glass-border, var(--border));
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  box-shadow: var(--elev-1);
+  overflow: hidden;
+  transition: transform var(--dur, 0.2s) var(--ease), box-shadow var(--dur, 0.2s) var(--ease), border-color var(--dur, 0.2s) var(--ease);
+}
+.camp-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--text-muted);
+  opacity: 0.4;
+}
+.camp-card.status-running::before { background: var(--primary); opacity: 1; }
+.camp-card.status-paused::before { background: var(--warning); opacity: 1; }
+.camp-card.status-completed::before { background: #3b82f6; opacity: 1; }
+.camp-card.status-failed::before,
+.camp-card.status-cancelled::before { background: var(--error); opacity: 1; }
+.camp-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--elev-2);
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--glass-border, var(--border)));
+}
+
+.camp-card__head { display: flex; align-items: center; gap: 0.7rem; }
+.camp-card__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 12px);
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #0a8f45));
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow, rgba(37, 211, 102, 0.3));
+}
+.camp-card__titles { min-width: 0; flex: 1; }
+.camp-card__titles h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.camp-card__sub { font-size: 0.78rem; color: var(--text-muted); }
+
+.camp-card__body { display: flex; align-items: center; gap: 1.1rem; }
+.camp-ring { flex-shrink: 0; }
+.camp-ring__track { stroke: color-mix(in srgb, var(--text-muted) 22%, transparent); }
+.camp-ring__fill { stroke: var(--primary); transition: stroke-dashoffset 0.6s var(--ease-out); }
+.camp-ring__label { fill: var(--text-primary); font-size: 15px; font-weight: 800; }
+
+.camp-card__metrics { display: flex; flex-direction: column; gap: 0.4rem; }
+.camp-metric { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); }
+.camp-metric__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.camp-metric__dot.ok { background: var(--primary); }
+.camp-metric__dot.pending { background: color-mix(in srgb, var(--text-muted) 60%, transparent); }
+.camp-metric__dot.fail { background: var(--error); }
+
+.camp-card__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.camp-card__done {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.3rem 0;
+}
+.camp-card--link { cursor: pointer; }
+
+/* Uploaded-file chip in the campaign composer */
+.camp-attach { align-items: center; }
+.camp-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--radius-sm, 9px);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  max-width: 260px;
+}
+.camp-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.camp-file-chip button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+.camp-file-chip button:hover { opacity: 1; }
+
+/* ---- Campaign detail page ---- */
+.cd-message {
+  padding: 1.1rem 1.25rem;
+  margin: 0.5rem 0 1.25rem;
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: var(--radius-lg, 16px);
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  box-shadow: var(--elev-1);
+}
+.cd-message__head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
+.cd-message__media { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--primary); font-weight: 600; }
+.cd-message__bubble {
+  padding: 0.75rem 0.95rem;
+  border-radius: 12px 12px 12px 4px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  max-width: 640px;
+}
+.cd-message .mkt-hint { margin-top: 0.6rem; }
+
+.cd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.cd-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: var(--radius-md, 12px);
+  background: var(--bg-card);
+  box-shadow: var(--elev-1);
+}
+.cd-stat__value { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
+.cd-stat__label { font-size: 0.78rem; color: var(--text-secondary); }
+
+.cd-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+.cd-tab {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--dur, 0.2s) var(--ease);
+}
+.cd-tab:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.cd-tab.active { background: var(--primary); border-color: transparent; color: #fff; }
+
+.cd-contact { display: flex; flex-direction: column; }
+.cd-contact__name { font-weight: 600; color: var(--text-primary); }
+.cd-contact__phone { font-size: 0.75rem; color: var(--text-muted); direction: ltr; font-variant-numeric: tabular-nums; }
+.cd-msg-cell { max-width: 320px; color: var(--text-secondary); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-error { font-size: 0.72rem; color: var(--error); margin-top: 3px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Featured "create your first audience" guide. */
+.aud-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 720px;
+  margin: 1.5rem auto 0;
+  padding: 1.75rem;
+  border: 1px solid var(--glass-border, var(--border));
+  border-radius: var(--radius-lg, 16px);
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(150%);
+  box-shadow: var(--elev-1);
+}
+.aud-guide__head {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.aud-guide__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md, 12px);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.aud-guide__head h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+.aud-guide__head p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.aud-guide__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+.aud-guide__steps li {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+.aud-guide__num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.aud-guide__steps strong {
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+.aud-guide__steps p {
+  margin: 0.15rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.aud-guide__create {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.aud-guide__create > label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+.aud-guide__create .mkt-toolbar {
+  margin: 0 0 0.5rem;
+}

@@ -1,0 +1,70 @@
+# ===========================================================================
+# HOT-RELOAD dev stack — edit source, see changes instantly, no image rebuild.
+# ONE container runs BOTH the API (NestJS watch) and the dashboard (Vite HMR)
+# via `npm run dev` (concurrently).
+#
+#   docker compose -f docker-compose.dev.yml down              # stop the built stack first (frees :2785)
+#   docker compose -f docker-compose.hotreload.yml up -d --no-build   # (build the image once, see below)
+#
+# Build the dev image once (host network for npm ci in the sandbox):
+#   docker build --network=host -f Dockerfile.dev -t whatsapp-saas-openwa-dev .
+#
+# Then open  http://localhost:2886  (Vite dev server + HMR). The API is on :2785
+# (same container); Vite proxies /api + /socket.io to it.
+#   • Backend  → `nest start --watch`: .ts edits recompile + restart in ~2-3s.
+#   • Frontend → Vite HMR: .tsx/.css edits hot-swap with no reload.
+# Shares ./data with the built stack — run only ONE stack at a time.
+# ===========================================================================
+services:
+  openwa:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: whatsapp-saas-openwa-dev
+    container_name: openwa-dev
+    # `npm run dev:stable` = concurrently( nest start [NO --watch] , vite ). The backend does NOT
+    # auto-restart on .ts changes — that's what orphaned processes and made the WhatsApp session flap.
+    # Frontend keeps instant Vite HMR; to apply a BACKEND change, restart the container:
+    #   docker compose -f docker-compose.hotreload.yml restart openwa
+    command: npm run dev:stable
+    ports:
+      - '${BIND_HOST:-127.0.0.1}:2785:2785' # API
+      - '${BIND_HOST:-127.0.0.1}:2886:2886' # dashboard (Vite HMR)
+    environment:
+      - NODE_ENV=development
+      - PORT=2785
+      - HOME=/tmp
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_TYPE=${DATABASE_TYPE:-sqlite}
+      - DATABASE_NAME=${DATABASE_NAME:-/app/data/openwa.sqlite}
+      - DATABASE_SYNCHRONIZE=${DATABASE_SYNCHRONIZE:-true}
+      - ENGINE_TYPE=${ENGINE_TYPE:-baileys}
+      - SESSION_DATA_PATH=${SESSION_DATA_PATH:-/app/data/sessions}
+      - STORAGE_TYPE=${STORAGE_TYPE:-local}
+      - STORAGE_LOCAL_PATH=${STORAGE_LOCAL_PATH:-/app/data/media}
+      - PLUGINS_DIR=${PLUGINS_DIR:-/app/data/plugins}
+      - AUTO_START_SESSIONS=${AUTO_START_SESSIONS:-false}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+      - OPENROUTER_EMBEDDING_MODEL=${OPENROUTER_EMBEDDING_MODEL:-openai/text-embedding-3-small}
+      # Vite (same container) proxies to the local API; polling for reliable bind-mount watching.
+      - VITE_PROXY_TARGET=http://localhost:2785
+      - VITE_USE_POLLING=true
+      - TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling
+      - TSC_WATCHDIRECTORY=DynamicPriorityPolling
+      - CHOKIDAR_USEPOLLING=true
+      # Dev: force-exit the old backend fast on each watch-restart so orphaned processes can't pile up
+      # and fight over the single WhatsApp connection (status flapping).
+      - SHUTDOWN_HARD_TIMEOUT_MS=3000
+    volumes:
+      # Live source tree, with the baked node_modules preserved (anonymous volumes shadow the host).
+      - .:/app
+      - /app/node_modules
+      - /app/dashboard/node_modules
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:2785/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s

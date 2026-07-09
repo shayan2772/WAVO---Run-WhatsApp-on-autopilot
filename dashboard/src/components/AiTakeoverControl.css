@@ -1,0 +1,45 @@
+.ai-takeover {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.ai-takeover__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ai-takeover--active .ai-takeover__badge {
+  color: #1fae5b;
+  background: rgba(31, 174, 91, 0.14);
+}
+.ai-takeover--paused .ai-takeover__badge {
+  color: #d98a00;
+  background: rgba(217, 138, 0, 0.16);
+}
+.ai-takeover__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #2a3746);
+  background: var(--bg-secondary, #111a27);
+  color: var(--text-primary, #e6edf3);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ai-takeover__btn:hover:not(:disabled) {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+.ai-takeover__btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

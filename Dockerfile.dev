@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+# ---------------------------------------------------------------------------
+# HOT-RELOAD dev image — NEVER for production (use ./Dockerfile for that).
+#
+# It only bakes the two dependency trees (API + dashboard) into the image so
+# native modules (sqlite3, …) are compiled for the container's arch. At runtime
+# docker-compose.hotreload.yml bind-mounts your working tree over /app and keeps
+# these node_modules via anonymous volumes, so editing source triggers
+# `nest start --watch` (API) and Vite HMR (dashboard) with NO image rebuild.
+# ---------------------------------------------------------------------------
+FROM node:22-slim
+
+WORKDIR /app
+
+# Native-addon build deps (sqlite3 et al.) + curl for the healthcheck.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install BOTH dependency trees. These layers cache on package*.json — they only
+# re-run when a dependency actually changes, not on ordinary code edits.
+COPY package*.json ./
+RUN npm ci --include=dev
+COPY dashboard/package*.json ./dashboard/
+RUN cd dashboard && npm ci --include=dev
+
+# Seed the source so the image is runnable even without the bind mount. The
+# compose bind mount overlays this with your live tree. (node_modules/dist/data
+# are excluded by .dockerignore, so the baked deps survive.)
+COPY . .
+
+EXPOSE 2785 2886

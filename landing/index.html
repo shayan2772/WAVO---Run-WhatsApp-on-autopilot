@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenWA — Open Source WhatsApp API Gateway</title>
+  <meta name="description" content="OpenWA is a free, self-hosted, open-source WhatsApp API Gateway. Full control over your messaging infrastructure — no vendor lock-in, no paywalls. REST API, multi-session, webhooks, MCP for AI agents, and a modern dashboard." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Space Grotesk', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            wa: {
+              50: '#e9fbf1',
+              100: '#c9f5dd',
+              300: '#5ce6a0',
+              400: '#25D366',   // WhatsApp green
+              500: '#12b866',
+              600: '#0e9f57',
+              700: '#128C7E',   // teal
+              800: '#075E54',   // dark teal
+              900: '#043b34',
+            },
+            ink: {
+              950: '#050807',
+              900: '#0a100d',
+              850: '#0e1613',
+              800: '#131f1a',
+              700: '#1c2a24',
+            },
+          },
+          boxShadow: {
+            glow: '0 0 60px -12px rgba(37, 211, 102, 0.45)',
+            'glow-lg': '0 0 120px -20px rgba(37, 211, 102, 0.55)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- GSAP + ScrollTrigger + TextPlugin (gsap-scrolltrigger skill) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    :root { --wa: #25D366; --teal: #128C7E; }
+    html, body { background: #050807; }
+    body { color: #dce7e2; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+    /* Aurora / mesh gradient background */
+    .aurora {
+      background:
+        radial-gradient(60% 55% at 15% 20%, rgba(37,211,102,0.18) 0%, transparent 60%),
+        radial-gradient(50% 50% at 85% 15%, rgba(18,140,126,0.22) 0%, transparent 60%),
+        radial-gradient(55% 60% at 75% 85%, rgba(7,94,84,0.28) 0%, transparent 65%),
+        radial-gradient(45% 45% at 25% 90%, rgba(37,211,102,0.12) 0%, transparent 60%);
+      filter: blur(10px);
+    }
+    .grid-lines {
+      background-image:
+        linear-gradient(rgba(37,211,102,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37,211,102,0.06) 1px, transparent 1px);
+      background-size: 64px 64px;
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+    }
+    .glass {
+      background: rgba(14, 22, 19, 0.55);
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      border: 1px solid rgba(37, 211, 102, 0.12);
+    }
+    .text-gradient {
+      background: linear-gradient(120deg, #eafff4 0%, #5ce6a0 45%, #25D366 70%, #128C7E 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .card-hover { transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .35s, box-shadow .35s; }
+    .card-hover:hover { transform: translateY(-6px); border-color: rgba(37,211,102,0.4); box-shadow: 0 20px 50px -20px rgba(37,211,102,0.35); }
+    .btn-glow { position: relative; transition: transform .2s, box-shadow .3s; }
+    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 0 40px -6px rgba(37,211,102,0.7); }
+    .btn-glow:active { transform: translateY(0) scale(.98); }
+
+    /* Marquee */
+    .marquee-track { display: flex; width: max-content; animation: marquee 32s linear infinite; }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+    .marquee:hover .marquee-track { animation-play-state: paused; }
+
+    /* Scroll indicator */
+    .scroll-dot { animation: dot 1.8s ease-in-out infinite; }
+    @keyframes dot { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(14px); opacity: 0; } 100% { opacity: 0; } }
+
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #050807; }
+    ::-webkit-scrollbar-thumb { background: #128C7E; border-radius: 8px; }
+    ::-webkit-scrollbar-thumb:hover { background: #25D366; }
+
+    /* Progress bar */
+    #progress { transform-origin: left; transform: scaleX(0); }
+
+    /* JS-driven reveal base state (hidden until GSAP animates in) */
+    .reveal { opacity: 0; }
+
+    /* Reduced motion: show everything, kill transforms */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1 !important; transform: none !important; }
+      .marquee-track, .scroll-dot { animation: none !important; }
+      html { scroll-behavior: auto; }
+    }
+
+    :focus-visible { outline: 3px solid var(--wa); outline-offset: 3px; border-radius: 6px; }
+    .dot-grid { background-image: radial-gradient(rgba(37,211,102,0.25) 1px, transparent 1px); background-size: 22px 22px; }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-wa-400 selection:text-ink-950">
+
+  <!-- Scroll progress -->
+  <div id="progress" class="fixed top-0 left-0 h-[3px] w-full bg-gradient-to-r from-wa-400 via-wa-300 to-wa-700 z-[60]"></div>
+
+  <!-- ============ NAV ============ -->
+  <header id="nav" class="fixed top-0 inset-x-0 z-50 transition-all duration-300">
+    <nav class="max-w-7xl mx-auto px-5 sm:px-8">
+      <div class="mt-3 flex items-center justify-between rounded-2xl glass px-4 sm:px-6 py-3">
+        <a href="#top" class="flex items-center gap-2.5 group">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gradient-to-br from-wa-400 to-wa-700 shadow-glow">
+            <i data-lucide="message-circle-more" class="w-5 h-5 text-ink-950"></i>
+          </span>
+          <span class="font-display text-lg font-700 tracking-tight text-white">Open<span class="text-wa-400">WA</span></span>
+        </a>
+        <div class="hidden md:flex items-center gap-8 text-sm font-500 text-white/70">
+          <a href="#features" class="hover:text-wa-400 transition">Features</a>
+          <a href="#how" class="hover:text-wa-400 transition">How it works</a>
+          <a href="#architecture" class="hover:text-wa-400 transition">Architecture</a>
+          <a href="#mcp" class="hover:text-wa-400 transition">AI / MCP</a>
+          <a href="#pricing" class="hover:text-wa-400 transition">Pricing</a>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="#" class="hidden sm:inline-flex items-center gap-2 text-sm font-500 text-white/70 hover:text-white transition">
+            <i data-lucide="github" class="w-4 h-4"></i> Star
+          </a>
+          <a href="#quickstart" class="btn-glow inline-flex items-center gap-2 rounded-xl bg-wa-400 px-4 py-2 text-sm font-700 text-ink-950">
+            Get started <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section id="top" class="relative min-h-screen flex items-center overflow-hidden pt-28 pb-16">
+    <div class="aurora absolute inset-0 -z-10"></div>
+    <div class="grid-lines absolute inset-0 -z-10 opacity-70"></div>
+    <div class="absolute -z-10 top-1/3 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-wa-700/10 blur-3xl" data-parallax="0.25"></div>
+
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-12 gap-12 items-center w-full">
+      <!-- copy -->
+      <div class="lg:col-span-6">
+        <div class="hero-el reveal inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs font-600 text-wa-300 mb-7">
+          <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-wa-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-wa-400"></span></span>
+          100% Open Source · MIT Licensed · Self-Hosted
+        </div>
+
+        <h1 class="hero-el reveal font-display text-4xl sm:text-6xl xl:text-7xl font-700 leading-[1.02] tracking-tight text-white">
+          Your WhatsApp API.<br />
+          <span class="text-gradient">Your infrastructure.</span><br />
+          Zero lock-in.
+        </h1>
+
+        <p class="hero-el reveal mt-7 text-lg text-white/65 max-w-xl leading-relaxed">
+          OpenWA is a free, self-hosted WhatsApp API Gateway built for developers who want
+          <span class="text-white/90 font-500">full control</span> over their messaging — no paywalls, no hidden feature locks.
+          Swap your database, storage, and cache without touching a line of code.
+        </p>
+
+        <div class="hero-el reveal mt-9 flex flex-wrap items-center gap-4">
+          <a href="#quickstart" class="btn-glow inline-flex items-center gap-2 rounded-xl bg-wa-400 px-6 py-3.5 text-base font-700 text-ink-950 shadow-glow">
+            <i data-lucide="rocket" class="w-5 h-5"></i> Deploy in one command
+          </a>
+          <a href="#features" class="inline-flex items-center gap-2 rounded-xl glass px-6 py-3.5 text-base font-600 text-white hover:border-wa-400/40 transition">
+            <i data-lucide="play" class="w-4 h-4 text-wa-400"></i> See features
+          </a>
+        </div>
+
+        <div class="hero-el reveal mt-9 flex items-center gap-6 text-sm text-white/50">
+          <span class="inline-flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-wa-400"></i> Docker native</span>
+          <span class="inline-flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-wa-400"></i> Multi-session</span>
+          <span class="inline-flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-wa-400"></i> Node 22 · NestJS 11</span>
+        </div>
+      </div>
+
+      <!-- terminal mockup -->
+      <div class="lg:col-span-6 hero-el reveal" data-parallax="-0.12">
+        <div class="relative">
+          <div class="absolute -inset-4 bg-wa-400/10 blur-2xl rounded-3xl"></div>
+          <div class="relative rounded-2xl glass overflow-hidden shadow-glow-lg">
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-ink-900/60">
+              <span class="w-3 h-3 rounded-full bg-red-400/80"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-400/80"></span>
+              <span class="w-3 h-3 rounded-full bg-wa-400/80"></span>
+              <span class="ml-3 text-xs font-mono text-white/40">bash — openwa</span>
+            </div>
+            <div class="p-5 font-mono text-[13px] leading-relaxed">
+              <p class="text-white/40"># Clone & launch the full stack</p>
+              <p class="text-wa-300"><span class="text-white/40">$</span> docker compose -f docker-compose.dev.yml up -d</p>
+              <p class="text-white/50 mt-1">✔ openwa-api        <span class="text-wa-400">running</span>  :2785</p>
+              <p class="text-white/50">✔ dashboard         <span class="text-wa-400">bundled</span></p>
+              <p class="text-white/50">✔ swagger docs      /api/docs</p>
+              <p class="mt-3 text-white/40"># Send your first message</p>
+              <p class="text-wa-300"><span class="text-white/40">$</span> curl -X POST .../messages/send-text \</p>
+              <p class="text-white/60 pl-4">-H "X-API-Key: <span class="text-wa-300">••••••••</span>" \</p>
+              <p class="text-white/60 pl-4">-d '{"chatId":"628…@c.us","text":"<span id="typed" class="text-wa-400"></span><span class="animate-pulse text-wa-400">▍</span>"}'</p>
+              <p class="mt-2 text-wa-400">→ 200 OK · message.sent ✓</p>
+            </div>
+          </div>
+          <!-- floating chips -->
+          <div class="float-chip absolute -left-6 top-10 glass rounded-xl px-3 py-2 text-xs font-600 text-white shadow-lg hidden sm:flex items-center gap-2">
+            <i data-lucide="webhook" class="w-4 h-4 text-wa-400"></i> webhook fired
+          </div>
+          <div class="float-chip absolute -right-4 bottom-14 glass rounded-xl px-3 py-2 text-xs font-600 text-white shadow-lg hidden sm:flex items-center gap-2">
+            <i data-lucide="bot" class="w-4 h-4 text-wa-400"></i> MCP agent connected
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- scroll cue -->
+    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/40">
+      <span class="text-[11px] tracking-[0.2em] uppercase">Scroll</span>
+      <span class="grid place-items-center w-6 h-10 rounded-full border border-white/20">
+        <span class="scroll-dot w-1.5 h-1.5 rounded-full bg-wa-400"></span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ============ TRUST / TECH MARQUEE ============ -->
+  <section class="py-10 border-y border-white/5 bg-ink-950/40">
+    <p class="text-center text-xs uppercase tracking-[0.25em] text-white/35 mb-6">Built on a battle-tested, pluggable stack</p>
+    <div class="marquee relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)]">
+      <div class="marquee-track gap-12 pr-12">
+        <!-- duplicated set for seamless loop -->
+        <div class="flex items-center gap-12 text-white/45 font-display font-600 text-lg shrink-0">
+          <span class="flex items-center gap-2"><i data-lucide="server" class="w-5 h-5 text-wa-400"></i>NestJS 11</span>
+          <span class="flex items-center gap-2"><i data-lucide="file-code-2" class="w-5 h-5 text-wa-400"></i>TypeScript 5</span>
+          <span class="flex items-center gap-2"><i data-lucide="container" class="w-5 h-5 text-wa-400"></i>Docker</span>
+          <span class="flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-wa-400"></i>PostgreSQL</span>
+          <span class="flex items-center gap-2"><i data-lucide="database-zap" class="w-5 h-5 text-wa-400"></i>SQLite</span>
+          <span class="flex items-center gap-2"><i data-lucide="zap" class="w-5 h-5 text-wa-400"></i>Redis</span>
+          <span class="flex items-center gap-2"><i data-lucide="hard-drive" class="w-5 h-5 text-wa-400"></i>S3 / MinIO</span>
+          <span class="flex items-center gap-2"><i data-lucide="workflow" class="w-5 h-5 text-wa-400"></i>n8n</span>
+        </div>
+        <div class="flex items-center gap-12 text-white/45 font-display font-600 text-lg shrink-0" aria-hidden="true">
+          <span class="flex items-center gap-2"><i data-lucide="server" class="w-5 h-5 text-wa-400"></i>NestJS 11</span>
+          <span class="flex items-center gap-2"><i data-lucide="file-code-2" class="w-5 h-5 text-wa-400"></i>TypeScript 5</span>
+          <span class="flex items-center gap-2"><i data-lucide="container" class="w-5 h-5 text-wa-400"></i>Docker</span>
+          <span class="flex items-center gap-2"><i data-lucide="database" class="w-5 h-5 text-wa-400"></i>PostgreSQL</span>
+          <span class="flex items-center gap-2"><i data-lucide="database-zap" class="w-5 h-5 text-wa-400"></i>SQLite</span>
+          <span class="flex items-center gap-2"><i data-lucide="zap" class="w-5 h-5 text-wa-400"></i>Redis</span>
+          <span class="flex items-center gap-2"><i data-lucide="hard-drive" class="w-5 h-5 text-wa-400"></i>S3 / MinIO</span>
+          <span class="flex items-center gap-2"><i data-lucide="workflow" class="w-5 h-5 text-wa-400"></i>n8n</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATS (count-up) ============ -->
+  <section class="py-24 relative">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="stat reveal glass rounded-2xl p-8 text-center card-hover">
+          <div class="text-4xl sm:text-5xl font-display font-700 text-gradient"><span class="counter" data-to="39">0</span>+</div>
+          <p class="mt-2 text-sm text-white/50">Curated MCP tools for AI agents</p>
+        </div>
+        <div class="stat reveal glass rounded-2xl p-8 text-center card-hover">
+          <div class="text-4xl sm:text-5xl font-display font-700 text-gradient">∞</div>
+          <p class="mt-2 text-sm text-white/50">Concurrent WhatsApp sessions</p>
+        </div>
+        <div class="stat reveal glass rounded-2xl p-8 text-center card-hover">
+          <div class="text-4xl sm:text-5xl font-display font-700 text-gradient"><span class="counter" data-to="100">0</span>%</div>
+          <p class="mt-2 text-sm text-white/50">Open source — no feature locks</p>
+        </div>
+        <div class="stat reveal glass rounded-2xl p-8 text-center card-hover">
+          <div class="text-4xl sm:text-5xl font-display font-700 text-gradient">$<span class="counter" data-to="0">0</span></div>
+          <p class="mt-2 text-sm text-white/50">Licensing fees, forever</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FEATURES ============ -->
+  <section id="features" class="py-24 relative">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8">
+      <div class="max-w-2xl mb-16">
+        <p class="section-eyebrow reveal text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4">Everything you need</p>
+        <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white leading-tight">One gateway. <span class="text-gradient">Every WhatsApp capability.</span></h2>
+        <p class="reveal mt-5 text-lg text-white/60">From a simple text message to bulk campaigns, groups, channels, and AI-driven automation — all behind one clean REST API and a modern dashboard.</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- feature cards -->
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="webhook" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">REST API + Webhooks</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">Full WhatsApp API over HTTP with real-time webhooks, HMAC signatures, and optional smart pre-dispatch filters so you only get the events you care about.</p>
+        </div>
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="layers" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">Multi-Session Ready</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">Run many WhatsApp accounts concurrently on a single instance, each with its own proxy, webhooks, and API-key scoping.</p>
+        </div>
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="send" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">Rich Messaging</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">Text, images, video, audio, documents, reactions, and bulk sends — with delivery and read-receipt tracking baked in.</p>
+        </div>
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="users-round" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">Groups &amp; Channels</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">Create and manage groups, broadcast to WhatsApp Channels/Newsletters, and organize chats with labels.</p>
+        </div>
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="shield-check" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">Enterprise Security</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">API-key auth with roles, CIDR whitelisting, rate limiting, audit logging, a Docker socket proxy, and non-root container execution.</p>
+        </div>
+        <div class="feature reveal glass rounded-2xl p-7 card-hover">
+          <div class="grid place-items-center w-12 h-12 rounded-xl bg-wa-400/10 mb-5"><i data-lucide="layout-dashboard" class="w-6 h-6 text-wa-400"></i></div>
+          <h3 class="font-display text-xl font-600 text-white">Modern Dashboard</h3>
+          <p class="mt-2 text-white/55 text-sm leading-relaxed">A React UI for sessions, webhooks, API keys, and live chats — bundled into the API image and served on the same port.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS (pinned horizontal scroll) ============ -->
+  <section id="how" class="relative">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 pt-24 pb-10">
+      <p class="reveal text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4">From zero to sent</p>
+      <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white">Live in <span class="text-gradient">four steps</span></h2>
+    </div>
+
+    <div id="hpin" class="relative h-screen overflow-hidden">
+      <div id="htrack" class="flex h-full items-center gap-8 px-[8vw] w-max">
+        <!-- panel 1 -->
+        <article class="hpanel w-[80vw] sm:w-[52vw] lg:w-[40vw] shrink-0 glass rounded-3xl p-9">
+          <span class="font-mono text-wa-400/60 text-sm">01</span>
+          <div class="grid place-items-center w-14 h-14 rounded-2xl bg-wa-400/10 my-5"><i data-lucide="terminal" class="w-7 h-7 text-wa-400"></i></div>
+          <h3 class="font-display text-2xl font-700 text-white">Spin up the stack</h3>
+          <p class="mt-3 text-white/60 leading-relaxed">One <span class="font-mono text-wa-300">docker compose up</span> and you have the API, dashboard, and Swagger docs running. Config is auto-generated on first run.</p>
+        </article>
+        <!-- panel 2 -->
+        <article class="hpanel w-[80vw] sm:w-[52vw] lg:w-[40vw] shrink-0 glass rounded-3xl p-9">
+          <span class="font-mono text-wa-400/60 text-sm">02</span>
+          <div class="grid place-items-center w-14 h-14 rounded-2xl bg-wa-400/10 my-5"><i data-lucide="qr-code" class="w-7 h-7 text-wa-400"></i></div>
+          <h3 class="font-display text-2xl font-700 text-white">Create a session, scan QR</h3>
+          <p class="mt-3 text-white/60 leading-relaxed">POST a session, start it, fetch the QR code, and scan it with WhatsApp. You're linked in seconds — repeat for every account.</p>
+        </article>
+        <!-- panel 3 -->
+        <article class="hpanel w-[80vw] sm:w-[52vw] lg:w-[40vw] shrink-0 glass rounded-3xl p-9">
+          <span class="font-mono text-wa-400/60 text-sm">03</span>
+          <div class="grid place-items-center w-14 h-14 rounded-2xl bg-wa-400/10 my-5"><i data-lucide="send-horizontal" class="w-7 h-7 text-wa-400"></i></div>
+          <h3 class="font-display text-2xl font-700 text-white">Send &amp; receive</h3>
+          <p class="mt-3 text-white/60 leading-relaxed">Fire messages through the REST API and stream inbound events to your server via signed webhooks — with optional smart filters.</p>
+        </article>
+        <!-- panel 4 -->
+        <article class="hpanel w-[80vw] sm:w-[52vw] lg:w-[40vw] shrink-0 glass rounded-3xl p-9 border-wa-400/30">
+          <span class="font-mono text-wa-400/60 text-sm">04</span>
+          <div class="grid place-items-center w-14 h-14 rounded-2xl bg-wa-400/10 my-5"><i data-lucide="infinity" class="w-7 h-7 text-wa-400"></i></div>
+          <h3 class="font-display text-2xl font-700 text-white">Scale &amp; automate</h3>
+          <p class="mt-3 text-white/60 leading-relaxed">Add PostgreSQL, Redis, and S3 via compose profiles. Wire n8n workflows or let AI agents drive WhatsApp over MCP.</p>
+        </article>
+        <div class="w-[8vw] shrink-0"></div>
+      </div>
+      <!-- progress track -->
+      <div class="absolute bottom-12 left-1/2 -translate-x-1/2 w-40 h-1 rounded-full bg-white/10 overflow-hidden">
+        <div id="hprog" class="h-full w-full bg-wa-400 origin-left" style="transform:scaleX(0)"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CODE / API SHOWCASE ============ -->
+  <section id="quickstart" class="py-24 relative overflow-hidden">
+    <div class="absolute inset-0 -z-10 dot-grid opacity-30 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000,transparent)]"></div>
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-14 items-center">
+      <div>
+        <p class="reveal text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4">Developer-first</p>
+        <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white leading-tight">An API that gets <span class="text-gradient">out of your way</span></h2>
+        <p class="reveal mt-5 text-lg text-white/60">Clean, predictable HTTP endpoints secured by API keys. Interactive Swagger docs ship in the box. Every route is documented, versioned, and yours to self-host.</p>
+        <ul class="mt-8 space-y-4">
+          <li class="reveal flex items-start gap-3"><i data-lucide="key-round" class="w-5 h-5 text-wa-400 mt-0.5"></i><span class="text-white/70"><b class="text-white font-600">API-key auth</b> with roles &amp; per-session scoping — pass via header, done.</span></li>
+          <li class="reveal flex items-start gap-3"><i data-lucide="book-open" class="w-5 h-5 text-wa-400 mt-0.5"></i><span class="text-white/70"><b class="text-white font-600">Swagger UI</b> at <span class="font-mono text-wa-300">/api/docs</span> — explore &amp; test live.</span></li>
+          <li class="reveal flex items-start gap-3"><i data-lucide="git-branch" class="w-5 h-5 text-wa-400 mt-0.5"></i><span class="text-white/70"><b class="text-white font-600">Engine choice</b> — whatsapp-web.js or Baileys via one env var.</span></li>
+        </ul>
+      </div>
+
+      <!-- code card -->
+      <div class="reveal">
+        <div class="rounded-2xl glass overflow-hidden shadow-glow-lg">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-ink-900/60">
+            <span class="w-3 h-3 rounded-full bg-red-400/70"></span>
+            <span class="w-3 h-3 rounded-full bg-yellow-400/70"></span>
+            <span class="w-3 h-3 rounded-full bg-wa-400/70"></span>
+            <span class="ml-3 text-xs font-mono text-white/40">send-message.sh</span>
+            <span class="ml-auto text-[11px] font-mono text-wa-400/70">200 OK</span>
+          </div>
+          <pre class="p-5 font-mono text-[12.5px] leading-relaxed overflow-x-auto"><code><span class="text-white/40"># Create a session</span>
+<span class="text-wa-300">curl</span> -X POST http://localhost:2785/api/sessions \
+  -H <span class="text-wa-400">"X-API-Key: $KEY"</span> \
+  -d <span class="text-wa-300">'{"name":"my-bot"}'</span>
+
+<span class="text-white/40"># Start it & grab the QR to scan</span>
+<span class="text-wa-300">curl</span> -X POST .../sessions/<span class="text-white/70">{id}</span>/start
+<span class="text-wa-300">curl</span> .../sessions/<span class="text-white/70">{id}</span>/qr
+
+<span class="text-white/40"># Send a message</span>
+<span class="text-wa-300">curl</span> -X POST .../messages/send-text \
+  -H <span class="text-wa-400">"X-API-Key: $KEY"</span> \
+  -d <span class="text-wa-300">'{
+    "chatId": "628123456789@c.us",
+    "text": "Hello from OpenWA!"
+  }'</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PLUGGABLE ARCHITECTURE ============ -->
+  <section id="architecture" class="py-24 relative">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8">
+      <div class="max-w-2xl mb-16">
+        <p class="reveal text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4">Pluggable by design</p>
+        <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white leading-tight">Swap the engine room. <span class="text-gradient">Keep the app.</span></h2>
+        <p class="reveal mt-5 text-lg text-white/60">Database, storage, and cache are adapters chosen by config — not code. Start on SQLite and local disk, graduate to PostgreSQL, Redis, and S3 without a rewrite.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="arch reveal glass rounded-2xl p-8 card-hover" data-parallax="0.06">
+          <div class="flex items-center gap-3 mb-5"><i data-lucide="database" class="w-6 h-6 text-wa-400"></i><h3 class="font-display text-lg font-600 text-white">Database</h3></div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">SQLite</span><span class="text-xs text-wa-400 font-600">zero-config</span></div>
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">PostgreSQL</span><span class="text-xs text-wa-400 font-600">production</span></div>
+          </div>
+        </div>
+        <div class="arch reveal glass rounded-2xl p-8 card-hover" data-parallax="-0.05">
+          <div class="flex items-center gap-3 mb-5"><i data-lucide="hard-drive" class="w-6 h-6 text-wa-400"></i><h3 class="font-display text-lg font-600 text-white">Storage</h3></div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">Local disk</span><span class="text-xs text-wa-400 font-600">default</span></div>
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">S3 / MinIO</span><span class="text-xs text-wa-400 font-600">scalable</span></div>
+          </div>
+        </div>
+        <div class="arch reveal glass rounded-2xl p-8 card-hover" data-parallax="0.06">
+          <div class="flex items-center gap-3 mb-5"><i data-lucide="zap" class="w-6 h-6 text-wa-400"></i><h3 class="font-display text-lg font-600 text-white">Cache</h3></div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">In-memory</span><span class="text-xs text-wa-400 font-600">default</span></div>
+            <div class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-2.5 text-sm"><span class="text-white/80">Redis</span><span class="text-xs text-wa-400 font-600">performance</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- deployment profiles bar -->
+      <div class="reveal mt-8 glass rounded-2xl p-6 flex flex-wrap items-center gap-x-8 gap-y-3 justify-center text-sm text-white/60">
+        <span class="font-600 text-white/80">Compose profiles:</span>
+        <span class="font-mono"><span class="text-wa-400">--profile</span> postgres</span>
+        <span class="font-mono"><span class="text-wa-400">--profile</span> redis</span>
+        <span class="font-mono"><span class="text-wa-400">--profile</span> minio</span>
+        <span class="font-mono"><span class="text-wa-400">--profile</span> full</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MCP / AI ============ -->
+  <section id="mcp" class="py-24 relative overflow-hidden">
+    <div class="absolute -z-10 top-1/2 left-1/4 w-[600px] h-[600px] rounded-full bg-wa-700/10 blur-3xl" data-parallax="0.15"></div>
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-14 items-center">
+      <div class="reveal order-2 lg:order-1">
+        <div class="rounded-2xl glass overflow-hidden shadow-glow-lg">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-ink-900/60">
+            <i data-lucide="bot" class="w-4 h-4 text-wa-400"></i>
+            <span class="text-xs font-mono text-white/50">.mcp.json</span>
+          </div>
+          <pre class="p-5 font-mono text-[12.5px] leading-relaxed overflow-x-auto"><code>{
+  <span class="text-wa-400">"mcpServers"</span>: {
+    <span class="text-wa-400">"openwa"</span>: {
+      <span class="text-wa-300">"type"</span>: <span class="text-white/80">"http"</span>,
+      <span class="text-wa-300">"url"</span>: <span class="text-white/80">"http://localhost:2785/mcp"</span>,
+      <span class="text-wa-300">"headers"</span>: {
+        <span class="text-wa-300">"Authorization"</span>: <span class="text-white/80">"Bearer $KEY"</span>
+      }
+    }
+  }
+}</code></pre>
+        </div>
+      </div>
+      <div class="order-1 lg:order-2">
+        <p class="reveal inline-flex items-center gap-2 text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4"><i data-lucide="sparkles" class="w-4 h-4"></i> AI-native</p>
+        <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white leading-tight">Let agents drive <span class="text-gradient">WhatsApp</span></h2>
+        <p class="reveal mt-5 text-lg text-white/60">Flip on the <b class="text-white font-600">Model Context Protocol</b> server and expose ~39 curated tools over a stateless <span class="font-mono text-wa-300">POST /mcp</span> endpoint. Claude, Cursor, and any MCP client can manage sessions and send messages — through the same auth, roles, and per-session scoping as REST.</p>
+        <div class="grid grid-cols-2 gap-4 mt-8">
+          <div class="reveal glass rounded-xl p-4 flex items-center gap-3"><i data-lucide="lock" class="w-5 h-5 text-wa-400"></i><span class="text-sm text-white/70">Least-privilege keys</span></div>
+          <div class="reveal glass rounded-xl p-4 flex items-center gap-3"><i data-lucide="eye" class="w-5 h-5 text-wa-400"></i><span class="text-sm text-white/70">Read-only mode</span></div>
+          <div class="reveal glass rounded-xl p-4 flex items-center gap-3"><i data-lucide="gauge" class="w-5 h-5 text-wa-400"></i><span class="text-sm text-white/70">Per-key rate limits</span></div>
+          <div class="reveal glass rounded-xl p-4 flex items-center gap-3"><i data-lucide="toggle-left" class="w-5 h-5 text-wa-400"></i><span class="text-sm text-white/70">Off by default</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRICING / OPEN SOURCE ============ -->
+  <section id="pricing" class="py-24 relative">
+    <div class="max-w-5xl mx-auto px-5 sm:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-14">
+        <p class="reveal text-sm font-700 uppercase tracking-[0.2em] text-wa-400 mb-4">Pricing</p>
+        <h2 class="reveal font-display text-4xl sm:text-5xl font-700 text-white">Free. As in <span class="text-gradient">freedom.</span></h2>
+        <p class="reveal mt-5 text-lg text-white/60">No seats, no metered messages, no locked features. Self-host it, fork it, ship it commercially — the MIT license says yes.</p>
+      </div>
+
+      <div class="reveal relative rounded-3xl glass p-10 sm:p-12 overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-wa-400/15 blur-3xl"></div>
+        <div class="relative grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-wa-400/15 px-3 py-1 text-xs font-700 text-wa-300 mb-5">MIT License</div>
+            <div class="flex items-end gap-2"><span class="font-display text-6xl font-700 text-white">$0</span><span class="text-white/50 mb-2">/ forever</span></div>
+            <p class="mt-4 text-white/60">The complete, production-ready gateway. Everything on this page is included — because it's all in the box.</p>
+            <div class="mt-8 flex flex-wrap gap-4">
+              <a href="#" class="btn-glow inline-flex items-center gap-2 rounded-xl bg-wa-400 px-6 py-3.5 font-700 text-ink-950 shadow-glow"><i data-lucide="github" class="w-5 h-5"></i> Clone on GitHub</a>
+              <a href="#" class="inline-flex items-center gap-2 rounded-xl glass px-6 py-3.5 font-600 text-white"><i data-lucide="book-open" class="w-4 h-4 text-wa-400"></i> Read the docs</a>
+            </div>
+          </div>
+          <ul class="space-y-3.5">
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> Unlimited sessions &amp; messages</li>
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> REST API, webhooks &amp; Swagger docs</li>
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> Groups, channels, media &amp; reactions</li>
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> Pluggable DB / storage / cache</li>
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> MCP server for AI agents</li>
+            <li class="flex items-center gap-3 text-white/75"><i data-lucide="check" class="w-5 h-5 text-wa-400"></i> Docker &amp; Kubernetes-ready</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINAL CTA ============ -->
+  <section class="py-28 relative overflow-hidden">
+    <div class="aurora absolute inset-0 -z-10 opacity-70"></div>
+    <div class="max-w-4xl mx-auto px-5 sm:px-8 text-center">
+      <h2 class="reveal font-display text-4xl sm:text-6xl font-700 text-white leading-tight">Own your <span class="text-gradient">messaging stack</span></h2>
+      <p class="reveal mt-6 text-lg text-white/65 max-w-2xl mx-auto">Deploy OpenWA in one command and start sending WhatsApp messages through your own infrastructure in minutes.</p>
+      <div class="reveal mt-10 flex flex-wrap items-center justify-center gap-4">
+        <a href="#quickstart" class="btn-glow inline-flex items-center gap-2 rounded-xl bg-wa-400 px-7 py-4 text-lg font-700 text-ink-950 shadow-glow-lg"><i data-lucide="rocket" class="w-5 h-5"></i> Get started free</a>
+        <a href="#" class="inline-flex items-center gap-2 rounded-xl glass px-7 py-4 text-lg font-600 text-white"><i data-lucide="github" class="w-5 h-5 text-wa-400"></i> View source</a>
+      </div>
+      <div class="reveal mt-8 inline-flex items-center gap-2 rounded-full glass px-4 py-2 font-mono text-sm text-white/70">
+        <i data-lucide="terminal" class="w-4 h-4 text-wa-400"></i>
+        docker compose -f docker-compose.dev.yml up -d
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="border-t border-white/10 bg-ink-950/60">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+      <div class="lg:col-span-1">
+        <a href="#top" class="flex items-center gap-2.5 mb-4">
+          <span class="grid place-items-center w-9 h-9 rounded-xl bg-gradient-to-br from-wa-400 to-wa-700"><i data-lucide="message-circle-more" class="w-5 h-5 text-ink-950"></i></span>
+          <span class="font-display text-lg font-700 text-white">Open<span class="text-wa-400">WA</span></span>
+        </a>
+        <p class="text-sm text-white/45 max-w-xs">Free, open-source WhatsApp API Gateway. Self-hosted, no vendor lock-in.</p>
+      </div>
+      <div>
+        <h4 class="text-sm font-700 text-white mb-4">Product</h4>
+        <ul class="space-y-2.5 text-sm text-white/50">
+          <li><a href="#features" class="hover:text-wa-400 transition">Features</a></li>
+          <li><a href="#how" class="hover:text-wa-400 transition">How it works</a></li>
+          <li><a href="#architecture" class="hover:text-wa-400 transition">Architecture</a></li>
+          <li><a href="#mcp" class="hover:text-wa-400 transition">AI / MCP</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-700 text-white mb-4">Developers</h4>
+        <ul class="space-y-2.5 text-sm text-white/50">
+          <li><a href="#" class="hover:text-wa-400 transition">Documentation</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">API Reference</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">Swagger Docs</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">Migration Guide</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-700 text-white mb-4">Community</h4>
+        <ul class="space-y-2.5 text-sm text-white/50">
+          <li><a href="#" class="hover:text-wa-400 transition">GitHub</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">Report a bug</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">Request a feature</a></li>
+          <li><a href="#" class="hover:text-wa-400 transition">Contributing</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/5">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-white/40">
+        <p>© 2025 OpenWA · MIT License · Made with 💚 by the community</p>
+        <div class="flex items-center gap-5">
+          <a href="#" class="hover:text-wa-400 transition"><i data-lucide="github" class="w-5 h-5"></i></a>
+          <a href="#" class="hover:text-wa-400 transition"><i data-lucide="book-open" class="w-5 h-5"></i></a>
+          <a href="#" class="hover:text-wa-400 transition"><i data-lucide="shield" class="w-5 h-5"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script>
+    // Render Lucide icons
+    lucide.createIcons();
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    gsap.registerPlugin(ScrollTrigger, TextPlugin);
+
+    if (!reduceMotion) {
+      // ---- Scroll progress bar ----
+      gsap.to('#progress', {
+        scaleX: 1, ease: 'none',
+        scrollTrigger: { trigger: document.body, start: 'top top', end: 'bottom bottom', scrub: 0.3 }
+      });
+
+      // ---- Nav shrink/solidify on scroll ----
+      ScrollTrigger.create({
+        start: 'top -80',
+        onUpdate: (self) => {
+          const bar = document.querySelector('#nav .glass');
+          if (self.scroll() > 80) bar.classList.add('shadow-glow'); else bar.classList.remove('shadow-glow');
+        }
+      });
+
+      // ---- HERO intro timeline ----
+      const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      heroTl.fromTo('.hero-el',
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.9, stagger: 0.12 });
+
+      // Typewriter inside terminal
+      gsap.to('#typed', { text: 'Hello from OpenWA!', duration: 1.6, delay: 1, ease: 'none' });
+
+      // Floating chips
+      gsap.to('.float-chip', {
+        y: -12, duration: 2.4, ease: 'sine.inOut', yoyo: true, repeat: -1, stagger: 0.6
+      });
+
+      // ---- Generic reveals (fade + rise on scroll) ----
+      // Skip elements handled elsewhere: hero timeline + batched card grids.
+      const batchedSelector = '.feature, .stat, .arch';
+      gsap.utils.toArray('.reveal').forEach((el) => {
+        if (el.classList.contains('hero-el')) return; // handled by hero timeline
+        if (el.matches(batchedSelector)) return;      // handled by ScrollTrigger.batch
+        gsap.fromTo(el, { y: 40, opacity: 0 }, {
+          y: 0, opacity: 1, duration: 0.8, ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+        });
+      });
+
+      // ---- Staggered batches for card grids ----
+      const batchTargets = ['.feature', '.stat', '.arch'];
+      batchTargets.forEach((sel) => {
+        ScrollTrigger.batch(sel, {
+          start: 'top 85%',
+          onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, stagger: 0.12, duration: 0.7, ease: 'power2.out', overwrite: true }),
+        });
+        gsap.set(sel, { opacity: 0, y: 40 });
+      });
+
+      // ---- Count-up numbers ----
+      gsap.utils.toArray('.counter').forEach((el) => {
+        const end = parseFloat(el.dataset.to);
+        const obj = { val: 0 };
+        ScrollTrigger.create({
+          trigger: el, start: 'top 88%', once: true,
+          onEnter: () => gsap.to(obj, {
+            val: end, duration: 1.8, ease: 'power2.out',
+            onUpdate: () => { el.textContent = Math.round(obj.val).toLocaleString(); }
+          })
+        });
+      });
+
+      // ---- Parallax layers ----
+      gsap.utils.toArray('[data-parallax]').forEach((el) => {
+        const depth = parseFloat(el.dataset.parallax);
+        gsap.to(el, {
+          yPercent: depth * 100, ease: 'none',
+          scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: true }
+        });
+      });
+
+      // ---- Pinned horizontal "How it works" ----
+      const track = document.querySelector('#htrack');
+      if (track) {
+        const scrollLen = () => track.scrollWidth - window.innerWidth;
+        const hAnim = gsap.to(track, {
+          x: () => -scrollLen(), ease: 'none',
+          scrollTrigger: {
+            trigger: '#hpin',
+            start: 'top top',
+            end: () => '+=' + scrollLen(),
+            pin: true, scrub: 1, invalidateOnRefresh: true,
+            onUpdate: (self) => gsap.set('#hprog', { scaleX: self.progress })
+          }
+        });
+        // subtle scale on active panels as they cross center
+        gsap.utils.toArray('.hpanel').forEach((panel) => {
+          gsap.fromTo(panel, { scale: 0.94 }, {
+            scale: 1, ease: 'none',
+            scrollTrigger: {
+              trigger: panel, containerAnimation: hAnim,
+              start: 'left center', end: 'center center', scrub: true
+            }
+          });
+        });
+      }
+
+      // Refresh after fonts/icons settle
+      window.addEventListener('load', () => ScrollTrigger.refresh());
+    } else {
+      // Reduced motion: make sure the typed text is present
+      const typed = document.getElementById('typed');
+      if (typed) typed.textContent = 'Hello from OpenWA!';
+    }
+
+    // ---- Smooth anchor scroll (native, works everywhere) ----
+    document.querySelectorAll('a[href^="#"]').forEach((a) => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href');
+        if (id.length > 1) {
+          const el = document.querySelector(id);
+          if (el) { e.preventDefault(); el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

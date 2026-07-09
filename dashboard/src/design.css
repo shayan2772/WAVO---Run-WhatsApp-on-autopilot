@@ -1,0 +1,376 @@
+/* ============================================================================
+   Wavo design layer — glassmorphism + motion scale on top of the App.css theme.
+   Strategy: redefine the surface tokens (--bg-white/--bg-card) as TRANSLUCENT
+   glass and give every card/panel/control a backdrop-blur, so the whole app
+   turns to frosted glass over a soft gradient with almost no per-component edits.
+   Works in light and dark (and the 7 accent palettes) automatically.
+   ========================================================================== */
+
+:root {
+  /* Spacing scale (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+
+  /* Glass surfaces (LIGHT) — translucent whites + a bright frosted edge. */
+  --bg-light: #e8edf6; /* page base under the gradient */
+  --bg-white: rgba(255, 255, 255, 0.72); /* controls, sidebar, modals */
+  --bg-card: rgba(255, 255, 255, 0.56); /* cards / panels */
+  --border: rgba(15, 23, 42, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.75);
+  --glass-blur: 16px;
+  /* Modals/dialogs must be OPAQUE (they sit over a dark scrim — glass would look muddy). */
+  --bg-elevated: #ffffff;
+
+  /* Compatibility aliases: some early CSS referenced tokens that never existed and fell back to
+     hardcoded DARK colors (var(--bg-secondary, #111a27) …), so those elements ignored the theme.
+     Defining them here as aliases to the real (theme-aware) tokens fixes light mode everywhere. */
+  --bg-secondary: var(--bg-white);
+  --bg-primary: var(--bg-light);
+  --border-color: var(--border);
+
+  --elev-1: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 14px rgba(15, 23, 42, 0.06);
+  --elev-2: 0 2px 4px rgba(15, 23, 42, 0.06), 0 10px 26px rgba(15, 23, 42, 0.1);
+  --elev-3: 0 20px 44px rgba(15, 23, 42, 0.16);
+  --accent-glow: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+/* Glass surfaces (DARK) — translucent slate + a faint light edge. */
+[data-theme='dark'] {
+  --bg-light: #080e1b;
+  --bg-white: rgba(30, 41, 59, 0.72);
+  --bg-card: rgba(30, 41, 59, 0.5);
+  --border: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --bg-elevated: #1e293b;
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-2: 0 2px 10px rgba(0, 0, 0, 0.5);
+  --elev-3: 0 22px 48px rgba(0, 0, 0, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-light: #080e1b;
+    --bg-white: rgba(30, 41, 59, 0.72);
+    --bg-card: rgba(30, 41, 59, 0.5);
+    --border: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --bg-elevated: #1e293b;
+    --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --elev-2: 0 2px 10px rgba(0, 0, 0, 0.5);
+    --elev-3: 0 22px 48px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* --- Ambient gradient backdrop (both themes read it via the tokens above) --- */
+body {
+  background:
+    radial-gradient(1100px 720px at 8% -12%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 58%),
+    radial-gradient(950px 680px at 108% 6%, rgba(59, 130, 246, 0.16), transparent 55%),
+    radial-gradient(820px 640px at 46% 118%, rgba(139, 92, 246, 0.14), transparent 55%),
+    var(--bg-light);
+  background-attachment: fixed;
+}
+[data-theme='dark'] body,
+:root:not([data-theme='light']) body {
+  background:
+    radial-gradient(1100px 720px at 8% -12%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 58%),
+    radial-gradient(950px 680px at 108% 6%, rgba(59, 130, 246, 0.16), transparent 55%),
+    radial-gradient(820px 640px at 46% 118%, rgba(139, 92, 246, 0.16), transparent 58%),
+    var(--bg-light);
+  background-attachment: fixed;
+}
+
+/* --- Refined custom scrollbars --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 45%, transparent);
+  border-radius: var(--radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--text-muted) 70%, transparent); background-clip: content-box; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------------------------------------------------------------------------
+   THE GLASS PASS — one rule frosts every card/panel/control. They already use
+   the (now translucent) --bg-white / --bg-card tokens; this adds the blur +
+   frosted edge that turns translucency into glass.
+   --------------------------------------------------------------------------- */
+.sidebar,
+.mobile-header,
+.surface,
+.dashboard .stat-card,
+.dashboard .kpi-card,
+.dashboard .sessions-section,
+.dashboard .camp-progress-card,
+.dashboard .attn-banner,
+.dashboard-charts .chart-card,
+.mkt-card,
+.mkt-form,
+.attn-panel,
+.phone-input__menu,
+.business-switcher-menu,
+.appearance-menu-list,
+.language-menu-list,
+.toast {
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--glass-border);
+}
+
+/* Dialogs are solid (opaque) — never glass — so they read cleanly over the dark scrim. */
+.modal {
+  background: var(--bg-elevated) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--border);
+}
+.modal-body input,
+.modal-body textarea,
+.modal-body select {
+  background: var(--bg-light);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* A crisp top highlight makes the frosted edge read as glass, not just opacity. */
+.sidebar,
+.surface,
+.dashboard .kpi-card,
+.dashboard .stat-card,
+.dashboard .sessions-section,
+.mkt-card,
+.mkt-form,
+.attn-panel,
+.dashboard-charts .chart-card {
+  box-shadow: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+[data-theme='dark'] .sidebar,
+[data-theme='dark'] .modal,
+[data-theme='dark'] .surface,
+[data-theme='dark'] .dashboard .kpi-card,
+[data-theme='dark'] .dashboard .stat-card,
+[data-theme='dark'] .dashboard .sessions-section,
+[data-theme='dark'] .mkt-card,
+[data-theme='dark'] .mkt-form,
+[data-theme='dark'] .attn-panel,
+[data-theme='dark'] .dashboard-charts .chart-card {
+  box-shadow: var(--elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Frosted form controls */
+input,
+select,
+textarea,
+.mkt-toolbar input,
+.mkt-form input,
+.mkt-form textarea,
+.mkt-form select,
+.phone-input__field,
+.phone-input__country {
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+}
+
+/* --- Page rhythm + entrance --- */
+.page,
+.dashboard {
+  padding: var(--space-6);
+  max-width: 1440px;
+  margin: 0 auto;
+  animation: page-in var(--dur-slow) var(--ease-out);
+}
+@media (max-width: 768px) {
+  .page,
+  .dashboard { padding: var(--space-4); }
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page, .dashboard, * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   Shared surface primitive (used by new widgets).
+   --------------------------------------------------------------------------- */
+.surface { background: var(--bg-card); border-radius: var(--radius-lg); }
+.surface--pad { padding: var(--space-5); }
+.surface--hover {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  cursor: pointer;
+}
+.surface--hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elev-2);
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--glass-border));
+}
+.surface--hover:active { transform: translateY(0); }
+
+/* ---------------------------------------------------------------------------
+   Button system (.ui-btn) — variants + sizes + loading + press feedback.
+   --------------------------------------------------------------------------- */
+.ui-btn {
+  --btn-bg: var(--bg-white);
+  --btn-fg: var(--text-primary);
+  --btn-bd: var(--border);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--btn-bd);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease),
+    background var(--dur) var(--ease), border-color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.ui-btn:hover { border-color: color-mix(in srgb, var(--primary) 55%, var(--btn-bd)); }
+.ui-btn:active { transform: scale(0.97); }
+.ui-btn:disabled,
+.ui-btn[aria-busy='true'] { cursor: not-allowed; opacity: 0.7; }
+.ui-btn[aria-busy='true'] { pointer-events: none; }
+.ui-btn--primary {
+  --btn-bg: var(--primary);
+  --btn-fg: #fff;
+  --btn-bd: transparent;
+  box-shadow: 0 6px 18px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.ui-btn--primary:hover { --btn-bg: var(--primary-hover); box-shadow: 0 10px 26px var(--accent-glow); }
+.ui-btn--danger { --btn-bg: var(--error); --btn-fg: #fff; --btn-bd: transparent; }
+.ui-btn--danger:hover { filter: brightness(0.94); border-color: transparent; }
+.ui-btn--ghost { --btn-bg: transparent; --btn-bd: transparent; --btn-fg: var(--text-secondary); backdrop-filter: none; }
+.ui-btn--ghost:hover { --btn-bg: var(--primary-soft); --btn-fg: var(--text-primary); border-color: transparent; }
+.ui-btn--sm { padding: 0.4rem 0.7rem; font-size: 0.8125rem; border-radius: var(--radius-sm); }
+.ui-btn--lg { padding: 0.85rem 1.4rem; font-size: 1rem; }
+.ui-btn--block { width: 100%; }
+.ui-btn__spinner { animation: spin 0.7s linear infinite; }
+.ui-btn__label { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* ---------------------------------------------------------------------------
+   Global fallbacks for the legacy .btn-primary / .btn-danger classes. Some pages
+   (e.g. Templates) use these without a page-scoped definition, so they used to
+   fall back to the near-black global button default. Page-scoped rules keep
+   higher specificity where they exist.
+   --------------------------------------------------------------------------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  box-shadow: 0 6px 18px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.btn-primary:hover { background: var(--primary-hover); box-shadow: 0 10px 26px var(--accent-glow); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--error);
+  color: #fff;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: filter var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.btn-danger:hover { filter: brightness(0.94); }
+.btn-danger:active { transform: scale(0.97); }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------------------------------------------------------------------------
+   Skeleton loaders.
+   --------------------------------------------------------------------------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bg-white) 60%, transparent), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* ---------------------------------------------------------------------------
+   Small shared bits.
+   --------------------------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.pill--ok { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
+.pill--warn { background: color-mix(in srgb, var(--warning) 18%, transparent); color: var(--warning); }
+.pill--danger { background: color-mix(in srgb, var(--error) 15%, transparent); color: var(--error); }
+.pill--muted { background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text-secondary); }
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 60%, transparent);
+  animation: live-pulse 1.8s var(--ease-out) infinite;
+}
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent); }
+  70% { box-shadow: 0 0 0 7px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}

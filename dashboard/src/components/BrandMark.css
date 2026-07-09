@@ -1,0 +1,25 @@
+.brandmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+.brandmark__chip {
+  display: grid;
+  place-items: center;
+  border-radius: 30%;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #0a8f45));
+  box-shadow: 0 6px 16px var(--accent-glow, rgba(37, 211, 102, 0.35)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+.brandmark__word {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  background: linear-gradient(120deg, var(--text-primary), color-mix(in srgb, var(--primary) 70%, var(--text-primary)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
