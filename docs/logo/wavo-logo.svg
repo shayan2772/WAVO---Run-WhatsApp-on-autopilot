@@ -1,0 +1,16 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wavo">
+  <defs>
+    <linearGradient id="wavoGrad" x1="30" y1="28" x2="210" y2="212" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#25D366"/>
+      <stop offset="1" stop-color="#0A8F45"/>
+    </linearGradient>
+  </defs>
+  <!-- WhatsApp-style speech bubble -->
+  <path d="M120 28C70 28 30 64 30 110c0 28 15 52 38 67l-10 35 38-18c7 2 15 3 24 3 50 0 90-36 90-82S170 28 120 28Z"
+        fill="url(#wavoGrad)"/>
+  <!-- Wavo wave motif -->
+  <g stroke="#ffffff" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 100c12-17 24-17 36 0s24 17 36 0"/>
+    <path d="M70 128c12-17 24-17 36 0s24 17 36 0"/>
+  </g>
+</svg>

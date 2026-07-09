@@ -396,7 +396,7 @@ describe('WebhookService', () => {
 
       const keyByUrl = new Map<string, string>();
       for (const call of mockFetch.mock.calls as [string, { headers: Record<string, string> }][]) {
-        keyByUrl.set(call[0], call[1].headers['X-OpenWA-Idempotency-Key']);
+        keyByUrl.set(call[0], call[1].headers['X-Wavo-Idempotency-Key']);
       }
       const keyA = keyByUrl.get('https://a.example/hook');
       const keyB = keyByUrl.get('https://b.example/hook');
@@ -449,8 +449,8 @@ describe('WebhookService', () => {
       const body = JSON.parse(call[1].body) as WebhookPayload;
       // Receivers dedupe on the header, so the signed body field must equal the header — and both must
       // be the server's value, not the plugin's forgery.
-      expect(body.idempotencyKey).toBe(headers['X-OpenWA-Idempotency-Key']);
-      expect(body.deliveryId).toBe(headers['X-OpenWA-Delivery-Id']);
+      expect(body.idempotencyKey).toBe(headers['X-Wavo-Idempotency-Key']);
+      expect(body.deliveryId).toBe(headers['X-Wavo-Delivery-Id']);
       expect(body.idempotencyKey).not.toBe('PLUGIN-FORGED');
       expect(body.deliveryId).not.toBe('PLUGIN-FORGED');
     });
@@ -687,7 +687,7 @@ describe('WebhookService', () => {
     it('drops reserved custom headers so the system headers always win', async () => {
       const webhook = createMockWebhook({
         events: ['message.received'],
-        headers: { 'X-OpenWA-Event': 'forged', 'Content-Type': 'text/plain', 'X-Custom': 'ok' },
+        headers: { 'X-Wavo-Event': 'forged', 'Content-Type': 'text/plain', 'X-Custom': 'ok' },
       });
       (repository.find as jest.Mock).mockResolvedValue([webhook]);
       (repository.update as jest.Mock).mockResolvedValue({ affected: 1 });
@@ -714,7 +714,7 @@ describe('WebhookService', () => {
 
       await service.dispatch('sess-1', 'message.received', {});
 
-      expect(captured['X-OpenWA-Event']).toBe('message.received'); // system value, not 'forged'
+      expect(captured['X-Wavo-Event']).toBe('message.received'); // system value, not 'forged'
       expect(captured['Content-Type']).toBe('application/json');
       expect(captured['X-Custom']).toBe('ok'); // legitimate custom header preserved
       mockFetch.mockReset();
@@ -811,14 +811,14 @@ describe('WebhookService', () => {
       await service.dispatch('sess-1', 'message.received', {});
 
       // Verify signature format
-      expect(capturedHeaders['X-OpenWA-Signature']).toMatch(/^sha256=[a-f0-9]{64}$/);
+      expect(capturedHeaders['X-Wavo-Signature']).toMatch(/^sha256=[a-f0-9]{64}$/);
 
       // Verify signature correctness against the ACTUAL delivered body. The body now carries the
       // server-canonical idempotency/delivery ids (re-asserted over the plugin's 'k'/'d'), so the
       // signature is checked against what the receiver actually gets — the real verification contract.
       const sentBody = (mockFetch.mock.calls[0] as [unknown, { body: string }])[1].body;
       const expected = `sha256=${crypto.createHmac('sha256', 'test-secret-123').update(sentBody).digest('hex')}`;
-      expect(capturedHeaders['X-OpenWA-Signature']).toBe(expected);
+      expect(capturedHeaders['X-Wavo-Signature']).toBe(expected);
 
       mockFetch.mockReset();
     });

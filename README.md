@@ -1,15 +1,16 @@
 <p align="center">
-  <img src="docs/logo/openwa_logo.webp" alt="Wavo Logo" width="180"/>
+  <img src="docs/logo/wavo-logo.svg" alt="Wavo" width="128"/>
 </p>
 
 <h1 align="center">Wavo</h1>
 <p align="center">
-  <strong>The open-source WhatsApp platform for messaging, marketing &amp; AI</strong>
+  <strong>Run WhatsApp on autopilot — marketing &amp; AI support, self-hosted.</strong>
 </p>
 
 <p align="center">
-  Run WhatsApp at scale — multi-number sessions, audiences, campaigns, a shared team inbox,
-  and an AI assistant — on a REST API and dashboard you fully self-host.
+  Connect your own WhatsApp numbers, send safely-paced bulk campaigns, and let an AI assistant
+  handle replies — with a shared team inbox and human takeover — all from a modern dashboard and a
+  clean REST API you fully own.
 </p>
 
 <p align="center">
@@ -41,9 +42,9 @@ It is a **multi-tenant platform**: sign up, create a workspace (business), invit
 one or more WhatsApp numbers, and start running conversations, campaigns, and AI-assisted replies —
 all from a modern web dashboard, or programmatically over a clean REST API.
 
-Under the hood, Wavo is built on a **pluggable gateway architecture** (the open-source OpenWA engine),
-so you can swap database, storage, and cache backends by configuration alone — from a zero-config
-SQLite laptop setup to a PostgreSQL + Redis + S3 production cluster — without changing a line of code.
+Under the hood, Wavo is built on a **pluggable gateway architecture**, so you can swap the WhatsApp
+engine, database, storage, and cache backends by configuration alone — from a zero-config SQLite
+laptop setup to a PostgreSQL + Redis + S3 production cluster — without changing a line of code.
 
 |                                 |                                                                        |
 | ------------------------------- | ---------------------------------------------------------------------- |
@@ -439,8 +440,8 @@ Licensed under the **MIT License** — free for personal and commercial use. See
 
 <div align="center">
 
-**Wavo** — The open-source WhatsApp platform for messaging, marketing &amp; AI
+**Wavo** — Run WhatsApp on autopilot: marketing &amp; AI support, self-hosted.
 
-<sub>Built on the open-source OpenWA engine · Made with 💚 by the community</sub>
+<sub>Open source (MIT) · Made with 💚</sub>
 
 </div>

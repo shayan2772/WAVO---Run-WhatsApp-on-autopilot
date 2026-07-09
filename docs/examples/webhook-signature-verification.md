@@ -8,11 +8,11 @@ OpenWA sends these system headers with webhook deliveries:
 
 | Header | Description |
 | ------ | ----------- |
-| `X-OpenWA-Signature` | HMAC-SHA256 signature, present only when the webhook has a secret |
-| `X-OpenWA-Event` | Event name, for example `message.received` |
-| `X-OpenWA-Idempotency-Key` | Stable key for duplicate detection |
-| `X-OpenWA-Delivery-Id` | Unique identifier for this delivery (stable across retry attempts) |
-| `X-OpenWA-Retry-Count` | Retry count for the current delivery |
+| `X-Wavo-Signature` | HMAC-SHA256 signature, present only when the webhook has a secret |
+| `X-Wavo-Event` | Event name, for example `message.received` |
+| `X-Wavo-Idempotency-Key` | Stable key for duplicate detection |
+| `X-Wavo-Delivery-Id` | Unique identifier for this delivery (stable across retry attempts) |
+| `X-Wavo-Retry-Count` | Retry count for the current delivery |
 
 The signature format is:
 
@@ -48,7 +48,7 @@ function verifyOpenWASignature(rawBody, signature, secret) {
 }
 
 app.post('/openwa/webhook', express.raw({ type: 'application/json' }), (req, res) => {
-  const signature = req.header('X-OpenWA-Signature');
+  const signature = req.header('X-Wavo-Signature');
 
   if (!verifyOpenWASignature(req.body, signature, WEBHOOK_SECRET)) {
     return res.status(401).send('Invalid signature');
@@ -90,7 +90,7 @@ def verify_openwa_signature(raw_body: bytes, signature: str | None, secret: str)
 @app.post("/openwa/webhook")
 async def openwa_webhook(request: Request):
     raw_body = await request.body()
-    signature = request.headers.get("x-openwa-signature")
+    signature = request.headers.get("x-wavo-signature")
 
     if not verify_openwa_signature(raw_body, signature, WEBHOOK_SECRET):
         raise HTTPException(status_code=401, detail="Invalid signature")
@@ -103,9 +103,9 @@ async def openwa_webhook(request: Request):
 
 ## Processing Checklist
 
-- Verify `X-OpenWA-Signature` before trusting or parsing the event.
+- Verify `X-Wavo-Signature` before trusting or parsing the event.
 - Use the exact raw request body received by your HTTP server.
 - Use a constant-time comparison function.
 - Return `401` for invalid signatures.
-- Use `X-OpenWA-Idempotency-Key` to avoid duplicate processing on retries.
+- Use `X-Wavo-Idempotency-Key` to avoid duplicate processing on retries.
 - Return a `2xx` response only after the event is accepted for processing.

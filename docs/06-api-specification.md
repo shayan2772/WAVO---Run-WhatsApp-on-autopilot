@@ -2891,7 +2891,7 @@ The service returns `void`; the controller returns a fixed success object. DELET
 
 Webhooks are configured per session and managed under `/api/sessions/:sessionId/webhooks` (handled by `WebhookController`). A separate cross-session list endpoint lives at `/api/webhooks` (handled by `WebhooksListController`). Every route requires an API key with **OPERATOR** role or higher.
 
-Two fields — `secret` and `headers` — are **write-only**: they are accepted on create/update but are **never** returned in any response (the response DTO has no `@Expose` for them, so `fromEntity` drops them). The `secret` is used to compute the `X-OpenWA-Signature: sha256=<hex>` HMAC-SHA256 header on deliveries.
+Two fields — `secret` and `headers` — are **write-only**: they are accepted on create/update but are **never** returned in any response (the response DTO has no `@Expose` for them, so `fromEntity` drops them). The `secret` is used to compute the `X-Wavo-Signature: sha256=<hex>` HMAC-SHA256 header on deliveries.
 
 The `events` array accepts these members plus the `*` wildcard: `message.received`, `message.sent`, `message.ack`, `message.failed`, `message.revoked`, `message.reaction`, `session.status`, `session.qr`, `session.authenticated`, `session.disconnected`, `group.join`, `group.leave`, `group.update`. The `group.*` events are **reserved** — accepted and validated but never dispatched (no engine emit source).
 
@@ -3016,8 +3016,8 @@ Create a webhook for the session.
 | --- | --- | --- | --- | --- |
 | url | string | yes | `@IsUrl({ require_tld: false })` (allows hostnames without a dot, e.g. `http://localhost:3000`); also run through the SSRF guard, which can reject with `400`. Entity column max 2048 chars. | Webhook URL to receive events. |
 | events | string[] | no | `@IsArray`, `@ArrayMinSize(1)`, `@IsIn([...WEBHOOK_EVENTS, '*'], { each: true })` | Event names to subscribe to (see allowed set above). Defaults to `["message.received"]` when omitted. |
-| secret | string | no | `@IsString`, `@MaxLength(255)` | HMAC-SHA256 signing key. **Write-only** — never returned. Used for `X-OpenWA-Signature`. Defaults to `null`. |
-| headers | Record<string,string> | no | `@IsHeaderMap()` — flat object (not array), ≤50 entries, names match `/^[A-Za-z0-9-]+$/`, values are strings ≤1024 chars with no C0 control/DEL (CR/LF injection guard). | Custom headers added to deliveries. **Write-only** — never returned. At delivery, `content-type` and `x-openwa-*` names are stripped. Defaults to `{}`. |
+| secret | string | no | `@IsString`, `@MaxLength(255)` | HMAC-SHA256 signing key. **Write-only** — never returned. Used for `X-Wavo-Signature`. Defaults to `null`. |
+| headers | Record<string,string> | no | `@IsHeaderMap()` — flat object (not array), ≤50 entries, names match `/^[A-Za-z0-9-]+$/`, values are strings ≤1024 chars with no C0 control/DEL (CR/LF injection guard). | Custom headers added to deliveries. **Write-only** — never returned. At delivery, `content-type` and `x-wavo-*` names are stripped. Defaults to `{}`. |
 | filters | WebhookFilters \| null | no | `@IsValidWebhookFilters()` — `{ conditions: [...] }`; each condition `{ field, operator('is'\|'isNot'\|'contains'\|'equals'), value(string\|string[]\|boolean), caseSensitive?:boolean }`; bounds: max 20 conditions, 100 values/condition, 1000-char text values. Message fields: `sender`, `recipient`, `body`, `type`, `isGroup`, `fromMe`, `hasMedia`, `mentions`. | Optional AND pre-filter; **all** conditions must match for the webhook to fire. Omit/null = fire on every subscribed event. Defaults to `null`. |
 | retryCount | number (int) | no | `@IsInt`, `@Min(0)`, `@Max(5)` | Delivery retry attempts on failure. Defaults to `3`. |
 
@@ -3137,7 +3137,7 @@ Send a synthetic test payload to the webhook URL and report the result. No reque
 { "success": true, "statusCode": 200 }
 ```
 
-On a reachable endpoint the response is `{ success: <response.ok>, statusCode: <response.status> }` — so a non-2xx target returns `200` HTTP with `success: false` and the target's `statusCode`. On an SSRF/timeout/network error the response is `{ "success": false, "error": "<message>" }`. The endpoint never throws on delivery failure; the failure is reflected in the body, not the HTTP status. The test POST sends `{ "event": "test", ... }` with headers `Content-Type`, `User-Agent: OpenWA-Webhook/1.0.0`, `X-OpenWA-Event: test`, `X-OpenWA-Idempotency-Key`, `X-OpenWA-Delivery-Id`, `X-OpenWA-Retry-Count: 0`, and `X-OpenWA-Signature` when a secret is set. Timeout defaults to 10000 ms (`webhook.timeout` config).
+On a reachable endpoint the response is `{ success: <response.ok>, statusCode: <response.status> }` — so a non-2xx target returns `200` HTTP with `success: false` and the target's `statusCode`. On an SSRF/timeout/network error the response is `{ "success": false, "error": "<message>" }`. The endpoint never throws on delivery failure; the failure is reflected in the body, not the HTTP status. The test POST sends `{ "event": "test", ... }` with headers `Content-Type`, `User-Agent: OpenWA-Webhook/1.0.0`, `X-Wavo-Event: test`, `X-Wavo-Idempotency-Key`, `X-Wavo-Delivery-Id`, `X-Wavo-Retry-Count: 0`, and `X-Wavo-Signature` when a secret is set. Timeout defaults to 10000 ms (`webhook.timeout` config).
 
 **Errors:** `401` missing/invalid API key · `403` insufficient role · `404` webhook not found in this session
 
@@ -4542,7 +4542,7 @@ Every registered webhook receives an HTTP `POST` with a JSON body of this shape:
 }
 ```
 
-`event`, `timestamp` (ISO-8601 dispatch time), `sessionId`, `idempotencyKey`, and `deliveryId` are always present; `data` holds the event-specific payload. The same values are mirrored into request headers (below). The HMAC `signature` is **not** in the body — it travels in the `X-OpenWA-Signature` header.
+`event`, `timestamp` (ISO-8601 dispatch time), `sessionId`, `idempotencyKey`, and `deliveryId` are always present; `data` holds the event-specific payload. The same values are mirrored into request headers (below). The HMAC `signature` is **not** in the body — it travels in the `X-Wavo-Signature` header.
 
 ### Event catalog
 
@@ -4572,14 +4572,14 @@ Webhook delivery is **at-least-once**. A consumer can legitimately receive the s
 - The underlying WhatsApp engine can re-fire an event for a single message.
 - A failed delivery (non-2xx response, timeout, or network error) is retried.
 
-**Design your handler to be idempotent**, keyed on the `X-OpenWA-Idempotency-Key` header (see below). As a server-side safety net, OpenWA de-duplicates inbound `message.received` before dispatch (a re-fired event for an already-persisted message is dropped), so one webhook normally sees each inbound message once — but this is best-effort defense-in-depth and does not remove the need for consumer-side idempotency.
+**Design your handler to be idempotent**, keyed on the `X-Wavo-Idempotency-Key` header (see below). As a server-side safety net, OpenWA de-duplicates inbound `message.received` before dispatch (a re-fired event for an already-persisted message is dropped), so one webhook normally sees each inbound message once — but this is best-effort defense-in-depth and does not remove the need for consumer-side idempotency.
 
 ### HMAC signature
 
 When a webhook is registered with a `secret`, each delivery carries:
 
 ```
-X-OpenWA-Signature: sha256=<hex>
+X-Wavo-Signature: sha256=<hex>
 ```
 
 The hex is an HMAC-SHA256 computed over the **raw JSON request body** (exactly the bytes sent) using the webhook's `secret`. Verify by recomputing over the raw body — not over a re-serialized parse — and compare in constant time:
@@ -4593,7 +4593,7 @@ function verify(rawBody, header, secret) {
 }
 ```
 
-If no `secret` is configured the `X-OpenWA-Signature` header is omitted entirely.
+If no `secret` is configured the `X-Wavo-Signature` header is omitted entirely.
 
 ### Idempotency & delivery headers
 
@@ -4601,11 +4601,11 @@ Every delivery includes:
 
 | Header | Meaning |
 | --- | --- |
-| `X-OpenWA-Event` | The event name (mirrors `event`) |
-| `X-OpenWA-Idempotency-Key` | Content-derived key; **stable across retries** of the same occurrence — dedupe on this |
-| `X-OpenWA-Delivery-Id` | A fresh `dlv_<uuid>` generated **per delivery** (differs per retry and per webhook) — for tracing, not dedup |
-| `X-OpenWA-Retry-Count` | Retry attempt number (`0` = first attempt) |
-| `X-OpenWA-Signature` | HMAC (only when a secret is set) |
+| `X-Wavo-Event` | The event name (mirrors `event`) |
+| `X-Wavo-Idempotency-Key` | Content-derived key; **stable across retries** of the same occurrence — dedupe on this |
+| `X-Wavo-Delivery-Id` | A fresh `dlv_<uuid>` generated **per delivery** (differs per retry and per webhook) — for tracing, not dedup |
+| `X-Wavo-Retry-Count` | Retry attempt number (`0` = first attempt) |
+| `X-Wavo-Signature` | HMAC (only when a secret is set) |
 
 **Idempotency key derivation.** The key is content-derived so duplicates of the same logical event collapse to one value:
 
@@ -4623,8 +4623,8 @@ Recurring lifecycle events (and `message.reaction`) carry the same content acros
 
 ### Retries with exponential backoff
 
-When the queue is enabled, a non-2xx response, timeout (`WEBHOOK_TIMEOUT`, default `10000` ms), or network error schedules a retry. The number of attempts comes from the webhook's `retryCount` (default `3`) and the delay grows **exponentially** from a base of `WEBHOOK_RETRY_DELAY` (default `5000` ms). Each retry reuses the same `idempotencyKey` and increments `X-OpenWA-Retry-Count`. If Redis/BullMQ rejects the initial enqueue, OpenWA logs a `webhook:error` hook event and falls back to direct delivery with the same inline retry budget. When the queue is disabled, delivery is direct with the same retry budget applied inline.
+When the queue is enabled, a non-2xx response, timeout (`WEBHOOK_TIMEOUT`, default `10000` ms), or network error schedules a retry. The number of attempts comes from the webhook's `retryCount` (default `3`) and the delay grows **exponentially** from a base of `WEBHOOK_RETRY_DELAY` (default `5000` ms). Each retry reuses the same `idempotencyKey` and increments `X-Wavo-Retry-Count`. If Redis/BullMQ rejects the initial enqueue, OpenWA logs a `webhook:error` hook event and falls back to direct delivery with the same inline retry budget. When the queue is disabled, delivery is direct with the same retry budget applied inline.
 
 ### SSRF guard on registration
 
-Webhook URLs are validated at **registration time**, not just at delivery. When SSRF protection is enabled (the default), creating or updating a webhook with a URL that resolves to a private/internal/loopback address is rejected synchronously with `400 Bad Request` instead of failing silently later at delivery. The `SSRF_ALLOWED_HOSTS` escape-hatch applies equally to registration and delivery. Operator-supplied custom headers that target reserved names (`Content-Type` or any `X-OpenWA-*`) are stripped, so a webhook config cannot forge the signature, event, or idempotency headers.
+Webhook URLs are validated at **registration time**, not just at delivery. When SSRF protection is enabled (the default), creating or updating a webhook with a URL that resolves to a private/internal/loopback address is rejected synchronously with `400 Bad Request` instead of failing silently later at delivery. The `SSRF_ALLOWED_HOSTS` escape-hatch applies equally to registration and delivery. Operator-supplied custom headers that target reserved names (`Content-Type` or any `X-Wavo-*`) are stripped, so a webhook config cannot forge the signature, event, or idempotency headers.

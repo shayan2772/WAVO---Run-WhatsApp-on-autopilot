@@ -405,7 +405,7 @@ http:
     sticky-session:
       headers:
         customResponseHeaders:
-          X-OpenWA-Node: '{{.Node}}'
+          X-Wavo-Node: '{{.Node}}'
 
   services:
     openwa:

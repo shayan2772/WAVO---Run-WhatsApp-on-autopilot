@@ -371,7 +371,7 @@ sequenceDiagram
     
     OW->>OW: Create payload
     OW->>OW: Sign with HMAC-SHA256
-    OW->>WH: POST + X-OpenWA-Signature
+    OW->>WH: POST + X-Wavo-Signature
     WH->>WH: Verify signature
     WH->>WH: Process if valid
     WH-->>OW: 200 OK

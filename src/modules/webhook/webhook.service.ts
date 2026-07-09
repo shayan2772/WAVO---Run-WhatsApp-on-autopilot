@@ -240,14 +240,14 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
       ...this.sanitizeCustomHeaders(webhook.headers),
       'Content-Type': 'application/json',
       'User-Agent': 'OpenWA-Webhook/1.0.0',
-      'X-OpenWA-Event': 'test',
-      'X-OpenWA-Idempotency-Key': testPayload.idempotencyKey,
-      'X-OpenWA-Delivery-Id': testPayload.deliveryId,
-      'X-OpenWA-Retry-Count': '0',
+      'X-Wavo-Event': 'test',
+      'X-Wavo-Idempotency-Key': testPayload.idempotencyKey,
+      'X-Wavo-Delivery-Id': testPayload.deliveryId,
+      'X-Wavo-Retry-Count': '0',
     };
 
     if (webhook.secret) {
-      headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
+      headers['X-Wavo-Signature'] = this.generateSignature(body, webhook.secret);
     }
 
     try {
@@ -345,7 +345,7 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
       const finalPayload = (hookResult as { payload?: WebhookPayload }).payload ?? payload;
 
       // The idempotency + delivery ids are server-generated and are the documented dedup key
-      // (receivers dedupe on the X-OpenWA-Idempotency-Key header). Re-assert them onto the post-hook
+      // (receivers dedupe on the X-Wavo-Idempotency-Key header). Re-assert them onto the post-hook
       // payload so a webhook:before plugin can't desync the signed body field from the header.
       finalPayload.idempotencyKey = idempotencyKey;
       finalPayload.deliveryId = deliveryId;
@@ -355,10 +355,10 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
         ...this.sanitizeCustomHeaders(webhook.headers),
         'Content-Type': 'application/json',
         'User-Agent': 'OpenWA-Webhook/1.0.0',
-        'X-OpenWA-Event': event,
-        'X-OpenWA-Idempotency-Key': idempotencyKey,
-        'X-OpenWA-Delivery-Id': deliveryId,
-        'X-OpenWA-Retry-Count': '0',
+        'X-Wavo-Event': event,
+        'X-Wavo-Idempotency-Key': idempotencyKey,
+        'X-Wavo-Delivery-Id': deliveryId,
+        'X-Wavo-Retry-Count': '0',
       };
 
       // Use queue if available, otherwise fallback to direct delivery
@@ -371,7 +371,7 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
           const signature = webhook.secret ? this.generateSignature(JSON.stringify(finalPayload), webhook.secret) : '';
 
           if (webhook.secret) {
-            headers['X-OpenWA-Signature'] = signature;
+            headers['X-Wavo-Signature'] = signature;
           }
 
           const jobData: WebhookJobData = {
@@ -422,7 +422,7 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
           // Fallback: deliver directly when the queue add failed (e.g. Redis unreachable with the
           // producer's enableOfflineQueue:false). This is at-least-once — if add() actually reached
           // Redis before rejecting, the queued job AND this fallback may both POST. Both paths carry the
-          // same X-OpenWA-Idempotency-Key / X-OpenWA-Delivery-Id, so a conformant receiver dedupes.
+          // same X-Wavo-Idempotency-Key / X-Wavo-Delivery-Id, so a conformant receiver dedupes.
           try {
             await this.deliverWebhook(webhook, finalPayload, headers);
 
@@ -503,11 +503,11 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
     const body = JSON.stringify(payload);
 
     // Update retry count header
-    headers['X-OpenWA-Retry-Count'] = String(attempt - 1);
+    headers['X-Wavo-Retry-Count'] = String(attempt - 1);
 
     // Add signature if secret is configured and not already present
-    if (webhook.secret && !headers['X-OpenWA-Signature']) {
-      headers['X-OpenWA-Signature'] = this.generateSignature(body, webhook.secret);
+    if (webhook.secret && !headers['X-Wavo-Signature']) {
+      headers['X-Wavo-Signature'] = this.generateSignature(body, webhook.secret);
     }
 
     try {
@@ -571,13 +571,13 @@ export class WebhookService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Drop operator-supplied custom headers that target reserved names (Content-Type or any
-   * X-OpenWA-* header) so a webhook config cannot forge the signature/event/idempotency
+   * X-Wavo-* header) so a webhook config cannot forge the signature/event/idempotency
    * headers. Spread the result BEFORE the system headers so system always wins.
    */
   private sanitizeCustomHeaders(custom: Record<string, string> | null | undefined): Record<string, string> {
     const safe: Record<string, string> = {};
     for (const [key, value] of Object.entries(custom ?? {})) {
-      if (!/^(content-type|x-openwa-)/i.test(key)) {
+      if (!/^(content-type|x-wavo-)/i.test(key)) {
         safe[key] = value;
       }
     }

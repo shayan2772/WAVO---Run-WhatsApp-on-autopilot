@@ -442,7 +442,7 @@ export interface WebhookFilters {
 export interface CreateWebhookRequest {
   url: string;
   events?: WebhookEvent[];
-  /** HMAC secret; signed as `X-OpenWA-Signature: sha256=…`. */
+  /** HMAC secret; signed as `X-Wavo-Signature: sha256=…`. */
   secret?: string;
   headers?: Record<string, string>;
   filters?: WebhookFilters | null;

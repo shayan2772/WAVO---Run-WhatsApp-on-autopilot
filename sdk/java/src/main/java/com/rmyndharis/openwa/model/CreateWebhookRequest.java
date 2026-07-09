@@ -36,7 +36,7 @@ public record CreateWebhookRequest(
             return this;
         }
 
-        /** HMAC secret; signed as {@code X-OpenWA-Signature: sha256=…}. */
+        /** HMAC secret; signed as {@code X-Wavo-Signature: sha256=…}. */
         public Builder secret(String v) {
             this.secret = v;
             return this;

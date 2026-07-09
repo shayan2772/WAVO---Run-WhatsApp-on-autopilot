@@ -11,9 +11,9 @@ interface WebhookTutorialProps {
 
 const SAMPLE_PAYLOAD = `POST https://your-server.com/webhooks
 Content-Type: application/json
-X-OpenWA-Event: message.received
-X-OpenWA-Signature: sha256=<hmac>
-X-OpenWA-Delivery-Id: 9f2c…
+X-Wavo-Event: message.received
+X-Wavo-Signature: sha256=<hmac>
+X-Wavo-Delivery-Id: 9f2c…
 
 {
   "event": "message.received",
@@ -76,14 +76,14 @@ export function WebhookTutorial({ onAddWebhook, canWrite, compact }: WebhookTuto
           <Shield size={16} />
           <div>
             <strong>Verify authenticity</strong>
-            <p>Every request is signed — check the <code>X-OpenWA-Signature</code> header (HMAC-SHA256 of the body using your secret).</p>
+            <p>Every request is signed — check the <code>X-Wavo-Signature</code> header (HMAC-SHA256 of the body using your secret).</p>
           </div>
         </div>
         <div className="wh-tut__card">
           <Zap size={16} />
           <div>
             <strong>Idempotency</strong>
-            <p>De-dupe retries with <code>X-OpenWA-Delivery-Id</code> / <code>X-OpenWA-Idempotency-Key</code>.</p>
+            <p>De-dupe retries with <code>X-Wavo-Delivery-Id</code> / <code>X-Wavo-Idempotency-Key</code>.</p>
           </div>
         </div>
       </div>
